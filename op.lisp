@@ -96,26 +96,39 @@
 (defmacro op* (&rest args &environment *env*)
   "Create an anonymous function with implicit arguments. Defer evaluation."
   (declare (special *env*))
-  (multiple-value-bind (args slots) (collect-slots args)
+  (multiple-value-bind (form slots) (collect-slots args)
     (assert (notany #'rest-slot-p (alist-datums (butlast slots))))    
-    `(lambda ,(alist-keys slots) 
-       ,(if (starts-with (first args) 'function) 
-            `(,(cadar args) ,@(rest args)) 
-            `(funcall ,@args)))))
+    `(lambda ,(alist-keys slots) ,form)))
             
 (defmacro op (&rest args &environment *env*)
   "Create an anonymous function with implicit arguments."
   (declare (special *env*))
   (multiple-value-bind (args invariants) (collect-invariants args)
     (with-binds invariants `(op* ,@args))))
+ 
+(defmacro pfuncall (&rest args)
+  "Partial funcall."
+  `(op funcall ,@args))  
   
+(defmacro pfuncall* (&rest args) 
+  "Partial funcall with defered evaluation."
+  `(op* funcall ,@args))
+ 
 (defmacro papply (&rest args)
   "Partial apply."
-  `(op #'apply ,@args))  
+  `(op apply ,@args))  
   
 (defmacro papply* (&rest args) 
   "Partial apply with defered evaluation."
-  `(op* #'apply ,@args))
+  `(op* apply ,@args))
+
+(defmacro pmultiple-value-call (&rest args) 
+  "Partial multiple-value-call with defered evaluation."
+  `(op multiple-value-call ,@args))
+  
+(defmacro pmultiple-value-call* (&rest args) 
+  "Partial multiple-value-call with defered evaluation."
+  `(op* multiple-value-call ,@args))
   
 (defun flip (fn)
   "Switch the first two arguments of fn."
