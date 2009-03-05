@@ -30,12 +30,11 @@
   
 (defun walk (fn form)
   "Walk form applying fn to each node."
-  (declare (special *env*))
   (labels ((rec (form) (mapcar (lambda (form) (walk fn form)) form))
            (rec-special (form)
              (destructuring-bind (special first . rest) form
                `(,special ,first ,@(rec rest)))))
-    (multiple-value-bind (form endp) (funcall fn (macroexpand form *env*))
+    (multiple-value-bind (form endp) (funcall fn form)
       (cond (endp form)
             ((lambda-form-p form) `(function ,(rec-special (second form))))
             ((starts-with form 'the) (rec-special form))
@@ -79,9 +78,10 @@
       
 (defun collect-invariants (form)
   "Bind subforms suitable for early evaluation."
+  (declare (special *env*))
   (let ((invariants))
-    (flet ((collect (arg)
-             (if (liftablep arg)
+    (flet ((collect (arg)             
+             (if (liftablep (macroexpand arg *env*))
                  (or (car (rassoc arg invariants :test #'equal))
                      (collect-bind arg invariants))
                  arg)))
