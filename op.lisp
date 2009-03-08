@@ -27,17 +27,16 @@
 (defun specialp (form)
   "Is form a special form?"
   (some (lambda (head) (starts-with form head)) '(the lambda)))
-  
+
 (defun walk (fn form)
   "Walk form applying fn to each node."
-  (labels ((rec (form) (mapcar (lambda (form) (walk fn form)) form)))
-    (multiple-value-bind (form endp) (funcall fn form)
-      (cond (endp form)
-            ((specialp form) (destructuring-bind (special first . rest) form
-                               `(,special ,first ,@(rec rest))))
-            ((recurp form) (rec form))
-            (t form)))))
-  
+  (multiple-value-bind (form endp) (funcall fn form)
+    (cond (endp form)
+          ((specialp form) (destructuring-bind (special first . rest) form
+                             `(,special ,first ,@(walk fn rest))))
+          ((recurp form) (mapcar (lambda (form) (walk fn form)) form))
+          (t form))))
+            
 (defun simple-slot-p (obj)
   "Is obj a simple slot designator?"
   (eq obj (intern "_")))
@@ -68,7 +67,7 @@
                    ((simple-slot-p arg) (collect-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
-
+     
 (defun liftablep (form)
   "Is form suitable for early evaluation?"
   (and (recurp form) (rnotany #'slotp form :recur-if #'recurp)))
