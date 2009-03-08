@@ -23,21 +23,18 @@
   (if (funcall recur-if tree) 
       (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
       (not (funcall predicate tree))))
-         
-(defun lambda-form-p (form)
-  "Is form a lambda form?"
-  (and (starts-with form 'function) (starts-with (second form) 'lambda)))
+
+(defun specialp (form)
+  "Is form a special form?"
+  (some (lambda (head) (starts-with form head)) '(the lambda)))
   
 (defun walk (fn form)
   "Walk form applying fn to each node."
-  (labels ((rec (form) (mapcar (lambda (form) (walk fn form)) form))
-           (rec-special (form)
-             (destructuring-bind (special first . rest) form
-               `(,special ,first ,@(rec rest)))))
+  (labels ((rec (form) (mapcar (lambda (form) (walk fn form)) form)))
     (multiple-value-bind (form endp) (funcall fn form)
       (cond (endp form)
-            ((lambda-form-p form) `(function ,(rec-special (second form))))
-            ((starts-with form 'the) (rec-special form))
+            ((specialp form) (destructuring-bind (special first . rest) form
+                               `(,special ,first ,@(rec rest))))
             ((recurp form) (rec form))
             (t form)))))
   
