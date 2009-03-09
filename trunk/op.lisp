@@ -11,7 +11,7 @@
 (defun starts-with (list head)
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
-  
+
 (defun recurp (form)
   "Is form non-terminal?"
   (not (or (atom form) 
@@ -62,8 +62,7 @@
   (let ((slots))
     (flet ((collect (arg)
              (cond ((slotp arg)
-                    (when (rest-slot-p arg) 
-                      (push (cons '&rest nil) slots))
+                    (when (rest-slot-p arg) (push (cons '&rest nil) slots))
                     (collect-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
