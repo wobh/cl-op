@@ -30,8 +30,8 @@
 
 (defun walk (fn form)
   "Walk form applying fn to each node."
-  (multiple-value-bind (form endp) (funcall fn form)
-    (cond (endp form)
+  (multiple-value-bind (form end-walk-p) (funcall fn form)
+    (cond (end-walk-p form)
           ((specialp form) (destructuring-bind (special first . rest) form
                              `(,special ,first ,@(walk fn rest))))
           ((recurp form) (mapcar (lambda (form) (walk fn form)) form))
@@ -61,10 +61,10 @@
   "Assign names to slots."
   (let ((slots))
     (flet ((collect (arg)
-             (cond ((rest-slot-p arg)
-                    (push (cons '&rest nil) slots)
+             (cond ((slotp arg)
+                    (when (rest-slot-p arg) 
+                      (push (cons '&rest nil) slots))
                     (collect-bind arg slots))
-                   ((simple-slot-p arg) (collect-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
      
