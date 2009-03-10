@@ -8,6 +8,10 @@
   "Get datums of an alist."
   (mapcar #'cdr alist))
 
+(defun disjoin (&rest predicates)
+  "Combine results of predicates by or."
+  (lambda (&rest args) (some (lambda (p) (apply p args)) predicates)))
+  
 (defun starts-with (list head)
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
@@ -24,16 +28,10 @@
       (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
       (not (funcall predicate tree))))
 
-(defun specialp (form)
-  "Is form a special form?"
-  (some (lambda (head) (starts-with form head)) '(the lambda)))
-
 (defun walk (fn form)
   "Walk form applying fn to each node."
   (multiple-value-bind (form end-walk-p) (funcall fn form)
     (cond (end-walk-p form)
-          ((specialp form) (destructuring-bind (special first . rest) form
-                             `(,special ,first ,@(walk fn rest))))
           ((recurp form) (mapcar (lambda (form) (walk fn form)) form))
           (t form))))
             
@@ -66,11 +64,16 @@
                     (collect-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
-     
+
 (defun liftablep (form)
   "Is form suitable for early evaluation?"
   (and (recurp form) (rnotany #'slotp form :recur-if #'recurp)))
-      
+    
+(defun specialp (form)
+  "Is form a special form or a macro call?"
+  (and (consp form) (funcall (disjoin #'special-operator-p #'macro-function) 
+                             (first form))))
+  
 (defun collect-invariants (form)
   "Bind subforms suitable for early evaluation."
   (declare (special *env*))
@@ -79,7 +82,7 @@
              (if (liftablep (macroexpand arg *env*))
                  (or (car (rassoc arg invariants :test #'equal))
                      (collect-bind arg invariants))
-                 arg)))
+                 (values arg (specialp arg)))))
       (values (walk #'collect form) invariants))))
 
 (defun with-binds (binds form)
