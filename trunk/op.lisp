@@ -16,15 +16,15 @@
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
 
-(defvar *recur-ignore* '(op op* pfuncall pfuncall* papply papply* 
-                         pmultiple-value-call pmultiple-value-call*)
+(defvar *walker-ignore-list* '(op op* pfuncall pfuncall* papply papply* 
+                               pmultiple-value-call pmultiple-value-call*)
   "Ignore forms starting with these symbols.")
-  
+
 (defun recurp (form)
   "Is form non-terminal?"
   (not (or (atom form) 
            (starts-with form 'quote) 
-           (some (lambda (head) (starts-with form head)) *recur-ignore*)
+           (some (lambda (head) (starts-with form head)) *walker-ignore-list*)
            (and (starts-with form 'function) (symbolp (second form))))))
 
 (defun rnotany (predicate tree &key (recur-if #'consp))
