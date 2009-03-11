@@ -9,4 +9,4 @@
            #:pmultiple-value-call
            #:pmultiple-value-call*
            #:flip
-           #:*recur-ignore*))
+           #:*walker-ignore-list*))
