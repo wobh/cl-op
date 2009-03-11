@@ -16,10 +16,15 @@
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
 
+(defvar *recur-ignore* '(op op* pfuncall pfuncall* papply papply* 
+                         pmultiple-value-call pmultiple-value-call*)
+  "Ignore forms starting with these symbols.")
+  
 (defun recurp (form)
   "Is form non-terminal?"
   (not (or (atom form) 
            (starts-with form 'quote) 
+           (some (lambda (head) (starts-with form head)) *recur-ignore*)
            (and (starts-with form 'function) (symbolp (second form))))))
 
 (defun rnotany (predicate tree &key (recur-if #'consp))
@@ -54,7 +59,7 @@
 (defmacro collect-bind (obj binds)
   "Make a binding for obj push it onto binds and return the new alias."
   `(car (first (push (make-bind ,obj) ,binds))))
-  
+
 (defun collect-slots (form)
   "Assign names to slots."
   (let ((slots))
@@ -83,7 +88,7 @@
                  (or (car (rassoc arg invariants :test #'equal))
                      (collect-bind arg invariants))
                  (values arg (specialp arg)))))
-      (values (walk #'collect form) invariants))))
+      (values (walk #'collect form) (reverse invariants)))))
 
 (defun with-binds (binds form)
   "Lexically enclose form in binds."
