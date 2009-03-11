@@ -8,4 +8,5 @@
            #:papply*
            #:pmultiple-value-call
            #:pmultiple-value-call*
-           #:flip))
+           #:flip
+           #:*recur-ignore*))
