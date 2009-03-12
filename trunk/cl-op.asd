@@ -9,7 +9,7 @@
   :name "cl-op"
   :description "Partial application library."
   :author "Simon Belak"
-  :version "0.4.2"
+  :version "0.5.0"
   :licence "MIT"
   :serial t
   :components ((:file "packages")

@@ -16,15 +16,10 @@
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
 
-(defvar *walker-ignore-list* '(op op* pfuncall pfuncall* papply papply* 
-                               pmultiple-value-call pmultiple-value-call*)
-  "Ignore forms starting with these symbols.")
-
 (defun recurp (form)
   "Is form non-terminal?"
   (not (or (atom form) 
-           (starts-with form 'quote) 
-           (some (lambda (head) (starts-with form head)) *walker-ignore-list*)
+           (some (lambda (head) (starts-with form head)) '(quote op op*))
            (and (starts-with form 'function) (symbolp (second form))))))
 
 (defun rnotany (predicate tree &key (recur-if #'consp))
@@ -108,31 +103,7 @@
   (declare (special *env*))
   (multiple-value-bind (args invariants) (collect-invariants args)
     (with-binds invariants `(op* ,@args))))
- 
-(defmacro pfuncall (&rest args)
-  "Partial funcall."
-  `(op funcall ,@args))  
-  
-(defmacro pfuncall* (&rest args) 
-  "Partial funcall with defered evaluation."
-  `(op* funcall ,@args))
- 
-(defmacro papply (&rest args)
-  "Partial apply."
-  `(op apply ,@args))  
-  
-(defmacro papply* (&rest args) 
-  "Partial apply with defered evaluation."
-  `(op* apply ,@args))
-
-(defmacro pmultiple-value-call (&rest args) 
-  "Partial multiple-value-call with defered evaluation."
-  `(op multiple-value-call ,@args))
-  
-(defmacro pmultiple-value-call* (&rest args) 
-  "Partial multiple-value-call with defered evaluation."
-  `(op* multiple-value-call ,@args))
-  
+   
 (defun flip (fn)
   "Switch the first two arguments of fn."
   (lambda (x y &rest args) (apply fn y x args)))

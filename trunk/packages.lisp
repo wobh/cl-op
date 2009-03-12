@@ -2,11 +2,4 @@
   (:use :cl)
   (:export #:op
            #:op*
-           #:pfuncall
-           #:pfuncall*
-           #:papply
-           #:papply*
-           #:pmultiple-value-call
-           #:pmultiple-value-call*
-           #:flip
-           #:*walker-ignore-list*))
+           #:flip))
