@@ -74,12 +74,11 @@
   (and (consp form) (funcall (disjoin #'special-operator-p #'macro-function) 
                              (first form))))
   
-(defun collect-invariants (form)
+(defun collect-invariants (form &key env)
   "Bind subforms suitable for early evaluation."
-  (declare (special *env*))
   (let ((invariants))
     (flet ((collect (arg)             
-             (if (liftablep (macroexpand arg *env*))
+             (if (liftablep (macroexpand arg env))
                  (or (car (rassoc arg invariants :test #'equal))
                      (collect-bind arg invariants))
                  (values arg (specialp arg)))))
@@ -91,17 +90,15 @@
       `(let ,(mapcar #'list (alist-keys binds) (alist-datums binds)) ,form)
       form))
       
-(defmacro op* (&rest args &environment *env*)
+(defmacro op* (&rest args)
   "Create an anonymous function with implicit arguments. Defer evaluation."
-  (declare (special *env*))
   (multiple-value-bind (form slots) (collect-slots args)
     (assert (notany #'rest-slot-p (alist-datums (butlast slots))))    
     `(lambda ,(alist-keys slots) ,form)))
             
-(defmacro op (&rest args &environment *env*)
+(defmacro op (&rest args &environment env)
   "Create an anonymous function with implicit arguments."
-  (declare (special *env*))
-  (multiple-value-bind (args invariants) (collect-invariants args)
+  (multiple-value-bind (args invariants) (collect-invariants args :env env)
     (with-binds invariants `(op* ,@args))))
    
 (defun flip (fn)
