@@ -1,0 +1,37 @@
+Version 0.5.1
+3-16-2009
+Made environment passing explicit.
+Added CHANGELOG.txt
+
+Version 0.5.0
+3-12-2009
+BREAKING CHNAGE -- removed papply, papply*, pfuncall, pfuncall*, pmultiple-value-bind, pmultiple-value-bind*, *walker-ignore-list*.
+
+Version 0.4.2
+3-11-2009
+Added support for nested ops.
+
+Version 0.4.0 
+3-10-2009
+Made invariant lifting less aggressive but more robust.
+
+Version 0.3.2
+3-9-2009
+Minor cleanup.
+
+Version 0.3.1
+3-8-2009
+bugfix: improper handling of lambda macro.
+
+Version 0.3.0
+3-5-2009
+Macroexpanding only to determine whether to lift.
+
+Version 0.2.0
+3-4-2009
+BREAKING CHANGE -- op now takes a function name or a lambda expression as the function argument (instead of a function designator as before). 
+Added pfuncall and pmultiple-value-call. 
+
+Version 0.1.0
+3-1-2009
+initial release. 
