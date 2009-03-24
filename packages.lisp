@@ -2,4 +2,6 @@
   (:use :cl)
   (:export #:op
            #:op*
-           #:flip))
+           #:flip
+           #:disjoin
+           #:conjoin))
