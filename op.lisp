@@ -55,7 +55,7 @@
   "Assign a fresh alias to datum."
   (cons (gensym "OP-") datum))
       
-(defmacro collect-bind (obj binds)
+(defmacro push-bind (obj binds)
   "Make a binding for obj push it onto binds and return the new alias."
   `(car (first (push (make-bind ,obj) ,binds))))
 
@@ -65,7 +65,7 @@
     (flet ((collect (arg)
              (cond ((slotp arg)
                     (when (rest-slot-p arg) (push (list '&rest) slots))
-                    (collect-bind arg slots))
+                    (push-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
 
@@ -75,8 +75,8 @@
     
 (defun specialp (form)
   "Is form a special form or a macro call?"
-  (and (consp form) (funcall (disjoin #'special-operator-p #'macro-function) 
-                             (first form))))
+  (and (consp form) 
+       (funcall (disjoin #'special-operator-p #'macro-function) (first form))))
   
 (defun collect-invariants (form &key env)
   "Bind subforms suitable for early evaluation."
@@ -84,7 +84,7 @@
     (flet ((collect (arg)             
              (if (liftablep (macroexpand arg env))
                  (or (car (rassoc arg invariants :test #'equal))
-                     (collect-bind arg invariants))
+                     (push-bind arg invariants))
                  (values arg (specialp arg)))))
       (values (walk #'collect form) (reverse invariants)))))
 
