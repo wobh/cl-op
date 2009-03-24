@@ -16,18 +16,22 @@
   "Does list start with head?"
   (and (consp list) (eql (first list) head)))
 
-(defun recurp (form)
-  "Is form non-terminal?"
-  (not (or (atom form) 
-           (some (lambda (head) (starts-with form head)) '(quote op op*))
-           (and (starts-with form 'function) (symbolp (second form))))))
-
+(defun zip (&rest lists)
+  "Make a list of tuples of elements occurring at the same position in lists."
+  (apply #'mapcar #'list lists))
+  
 (defun rnotany (predicate tree &key (recur-if #'consp))
   "Recursive notany."
   (if (funcall recur-if tree) 
       (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
       (not (funcall predicate tree))))
-
+  
+(defun recurp (form)
+  "Is form non-terminal?"
+  (not (or (atom form) 
+           (some (lambda (head) (starts-with form head)) '(quote op op*))
+           (and (starts-with form 'function) (symbolp (second form))))))
+      
 (defun walk (fn form)
   "Walk form applying fn to each node."
   (multiple-value-bind (form end-walk-p) (funcall fn form)
@@ -60,7 +64,7 @@
   (let ((slots))
     (flet ((collect (arg)
              (cond ((slotp arg)
-                    (when (rest-slot-p arg) (push (cons '&rest nil) slots))
+                    (when (rest-slot-p arg) (push (list '&rest) slots))
                     (collect-bind arg slots))
                    (t arg))))
       (values (walk #'collect form) (reverse slots)))))
@@ -86,9 +90,7 @@
 
 (defun with-binds (binds form)
   "Lexically enclose form in binds."
-  (if binds
-      `(let ,(mapcar #'list (alist-keys binds) (alist-datums binds)) ,form)
-      form))
+  (if binds `(let ,(zip (alist-keys binds) (alist-datums binds)) ,form) form))
       
 (defmacro op* (&rest args)
   "Create an anonymous function with implicit arguments. Defer evaluation."
