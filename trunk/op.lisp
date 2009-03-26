@@ -1,14 +1,4 @@
 (in-package :cl-op)
-
-(defun disjoin (&rest predicates)
-  "OR predicate combinator."
-  (lambda (&rest arguments) 
-    (some (lambda (predicate) (apply predicate arguments)) predicates)))
-    
-(defun conjoin (&rest predicates)
-  "AND predicate combinator."
-  (lambda (&rest arguments) 
-    (every (lambda (predicate) (apply predicate arguments)) predicates)))
   
 (defun starts-with (list head)
   "Does LIST start with HEAD?"
@@ -59,12 +49,11 @@
 (defun liftablep (form)
   "Is FORM suitable for early evaluation?"
   (and (recurp form) (rnotany #'slotp form :recur-if #'recurp)))
-    
-(defun specialp (form)
-  "Is FORM a special form or a macro call?"
-  (and (consp form) 
-       (funcall (disjoin #'special-operator-p #'macro-function) (first form))))
 
+(defun special-form-p (form)
+  "Is FORM a special form?"
+  (and (consp form) (special-operator-p (first form))))
+  
 (defmacro with-rebinder (collector &body body)
   "Locally define collector function for bindings named COLLECTOR."
   (let ((binds (gensym)))
@@ -80,9 +69,10 @@
   "Bind subforms suitable for early evaluation."
   (with-rebinder (bind)
     (values (walk (lambda (node)
-                    (if (liftablep (macroexpand node environment)) 
-                        (bind node) 
-                        (values node (specialp node)))) 
+                    (let ((expansion (macroexpand node environment)))
+                      (if (liftablep expansion) 
+                          (bind node) 
+                          (values expansion (special-form-p expansion)))))
                   form) 
             (bind))))
 
@@ -100,7 +90,3 @@
   (multiple-value-bind (form invariants) 
                        (lift-invariants form :environment environment)
     (with-bindings invariants `(op* ,@form))))
-   
-(defun flip (function)
-  "Switch the first two arguments of FUNCTION."
-  (lambda (x y &rest arguments) (apply function y x arguments)))

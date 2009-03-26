@@ -1,3 +1,9 @@
+Version 0.6.0
+3-26-2009
+Better invariant lifting of macro forms containing slots.
+Added COMPOSE.
+Moved the utility higher order functions (FLIP, CONJOIN, DISJOIN, COMPOSE) to a seperate package CL-OP-HOF.
+
 Version 0.5.2
 3-24-2009
 Major refactoring.
