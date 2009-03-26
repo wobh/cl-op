@@ -1,7 +1,11 @@
 (defpackage :cl-op
   (:use :cl)
   (:export #:op
-           #:op*
-           #:flip
+           #:op*))
+           
+(defpackage :cl-op-hof
+  (:use :cl)
+  (:export #:flip
            #:disjoin
-           #:conjoin))
+           #:conjoin
+           #:compose))
