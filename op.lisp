@@ -15,13 +15,22 @@
   (not (or (atom form) 
            (some (lambda (head) (starts-with form head)) '(quote op op*))
            (and (starts-with form 'function) (symbolp (second form))))))
-      
-(defun walk (function form)
-  "Walk FORM applying FUNCTION to each node."
-  (multiple-value-bind (form end-walk-p) (funcall function form)
-    (cond (end-walk-p form)
-          ((recurp form) (mapcar (lambda (form) (walk function form)) form))
-          (t form))))
+
+(defun walk-subforms (function form accumulator &optional result)
+  "Walk subforms of FORM."
+  (if form
+      (multiple-value-bind (subform accumulator) 
+                           (walk function (first form) accumulator)
+        (walk-subforms function (rest form) accumulator (cons subform result)))
+      (values (reverse result) accumulator)))
+           
+(defun walk (function form &optional accumulator)
+  "Walk FORM applying FUNCTION to each node."         
+  (multiple-value-bind (form accumulator end-walk-p) 
+                       (funcall function form accumulator)
+    (cond (end-walk-p (values form accumulator))
+          ((recurp form) (walk-subforms function form accumulator))
+          (t (values form accumulator)))))
             
 (defun simple-slot-p (object)
   "Is OBJECT a simple slot designator?"
@@ -37,14 +46,14 @@
                       
 (defun slots-to-arguments (form)
   "Assign names to slots."
-  (let ((slots))
-    (values (walk (lambda (node)
-                    (cond ((slotp node)
-                           (when (rest-slot-p node) (push '&rest slots))
-                           (first (push (gensym "OP-") slots)))
-                          (t node))) 
-                  form)
-            (reverse slots))))
+  (walk (lambda (subform arguments)
+          (if (slotp subform)
+              (let ((argname (gensym "OP-")))
+                (if (rest-slot-p subform)
+                    (values argname (append (list argname '&rest) arguments))
+                    (values argname (cons argname arguments))))
+              (values subform arguments)))
+        form))
 
 (defun liftablep (form)
   "Is FORM suitable for early evaluation?"
@@ -53,28 +62,18 @@
 (defun special-form-p (form)
   "Is FORM a special form?"
   (and (consp form) (special-operator-p (first form))))
-  
-(defmacro with-rebinder (collector &body body)
-  "Locally define collector function for bindings named COLLECTOR."
-  (let ((binds (gensym)))
-    `(let ((,binds ,(second collector)))
-       (flet ((,(first collector) (&optional datum) 
-                (if datum
-                    (first (or (find datum ,binds :test #'equal :key #'second)
-                               (first (push (list (gensym) datum) ,binds))))
-                    (reverse ,binds))))
-         ,@body))))
-
+    
 (defun lift-invariants (form &key environment)
   "Bind subforms suitable for early evaluation."
-  (with-rebinder (bind)
-    (values (walk (lambda (node)
-                    (let ((expansion (macroexpand node environment)))
-                      (if (liftablep expansion) 
-                          (bind node) 
-                          (values expansion (special-form-p expansion)))))
-                  form) 
-            (bind))))
+  (walk (lambda (subform bindings)
+          (let ((expansion (macroexpand subform environment)))
+            (if (liftablep expansion) 
+                (let ((bind (or (find subform bindings  
+                                      :test #'equal :key #'second)
+                                (list (gensym) subform))))
+                  (values (first bind) (adjoin bind bindings :test #'equal)))
+                (values expansion bindings (special-form-p expansion)))))
+        form))
 
 (defun with-bindings (bindings form)
   "Lexically enclose FORM in BINDINGS."
@@ -83,7 +82,7 @@
 (defmacro op* (&rest form)
   "Make an anonymous function with implicit arguments. Defer evaluation."
   (multiple-value-bind (form slots) (slots-to-arguments form)
-    `(lambda ,slots ,form)))
+    `(lambda ,(reverse slots) ,form)))
             
 (defmacro op (&rest form &environment environment)
   "Make an anonymous function with implicit arguments."

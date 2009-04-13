@@ -8,4 +8,5 @@
   (:export #:flip
            #:disjoin
            #:conjoin
-           #:compose))
+           #:compose
+           #:generator))
