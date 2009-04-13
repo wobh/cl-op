@@ -1,3 +1,8 @@
+Version 0.6.1
+4-13-2009
+Added GENERATOR to CL-OP-HOF.
+Refactored WALK.
+
 Version 0.6.0
 3-26-2009
 Better invariant lifting of macro forms containing slots.
