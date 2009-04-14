@@ -13,7 +13,7 @@
 (defun recurp (form)
   "Is FORM non-terminal?"
   (not (or (atom form) 
-           (some (lambda (head) (starts-with form head)) '(quote op op*))
+           (member (first form) '(quote op op*))
            (and (starts-with form 'function) (symbolp (second form))))))
 
 (defun walk-subforms (function form accumulator &optional result)
@@ -72,7 +72,7 @@
                                       :test #'equal :key #'second)
                                 (list (gensym) subform))))
                   (values (first bind) (adjoin bind bindings :test #'equal)))
-                (values expansion bindings (special-form-p expansion)))))
+                (values subform bindings (special-form-p expansion)))))
         form))
 
 (defun with-bindings (bindings form)
