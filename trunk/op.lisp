@@ -1,36 +1,33 @@
 (in-package :cl-op)
   
-(defun starts-with (list head)
-  "Does LIST start with HEAD?"
-  (and (consp list) (eql (first list) head)))
-  
 (defun rnotany (predicate tree &key (recur-if #'consp))
   "Recursive NOTANY."
   (if (funcall recur-if tree) 
       (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
       (not (funcall predicate tree))))
-  
+             
+(defun walk (function form &key accumulator (recur-if #'consp))
+  "Walk FORM applying FUNCTION to each node."         
+  (labels ((walk-subforms (form accumulator result)
+             (if form
+                 (destructuring-bind (subform . rest) form
+                   (multiple-value-bind (subform accumulator) 
+                                        (walk function subform 
+                                              :accumulator accumulator
+                                              :recur-if recur-if)
+                     (walk-subforms rest accumulator (cons subform result))))
+                 (values (reverse result) accumulator))))
+    (multiple-value-bind (form accumulator end-walk-p) 
+                         (funcall function form accumulator)
+      (cond (end-walk-p (values form accumulator))
+            ((funcall recur-if form) (walk-subforms form accumulator nil))
+            (t (values form accumulator))))))
+
 (defun recurp (form)
   "Is FORM non-terminal?"
   (not (or (atom form) 
            (member (first form) '(quote op op*))
-           (and (starts-with form 'function) (symbolp (second form))))))
-
-(defun walk-subforms (function form accumulator &optional result)
-  "Walk subforms of FORM."
-  (if form
-      (multiple-value-bind (subform accumulator) 
-                           (walk function (first form) accumulator)
-        (walk-subforms function (rest form) accumulator (cons subform result)))
-      (values (reverse result) accumulator)))
-           
-(defun walk (function form &optional accumulator)
-  "Walk FORM applying FUNCTION to each node."         
-  (multiple-value-bind (form accumulator end-walk-p) 
-                       (funcall function form accumulator)
-    (cond (end-walk-p (values form accumulator))
-          ((recurp form) (walk-subforms function form accumulator))
-          (t (values form accumulator)))))
+           (and (eq (first form) 'function) (symbolp (second form))))))
             
 (defun simple-slot-p (object)
   "Is OBJECT a simple slot designator?"
@@ -53,7 +50,7 @@
                     (values argname (append (list argname '&rest) arguments))
                     (values argname (cons argname arguments))))
               (values subform arguments)))
-        form))
+        form :recur-if #'recurp))
 
 (defun liftablep (form)
   "Is FORM suitable for early evaluation?"
@@ -73,7 +70,7 @@
                                 (list (gensym) subform))))
                   (values (first bind) (adjoin bind bindings :test #'equal)))
                 (values subform bindings (special-form-p expansion)))))
-        form))
+        form :recur-if #'recurp))
 
 (defun with-bindings (bindings form)
   "Lexically enclose FORM in BINDINGS."
@@ -89,3 +86,4 @@
   (multiple-value-bind (form invariants) 
                        (lift-invariants form :environment environment)
     (with-bindings invariants `(op* ,@form))))
+    
