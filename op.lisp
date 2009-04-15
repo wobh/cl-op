@@ -1,11 +1,5 @@
 (in-package :cl-op)
-  
-(defun rnotany (predicate tree &key (recur-if #'consp))
-  "Recursive NOTANY."
-  (if (funcall recur-if tree) 
-      (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
-      (not (funcall predicate tree))))
-             
+               
 (defun walk (function form &key accumulator (recur-if #'consp))
   "Walk FORM applying FUNCTION to each node."         
   (labels ((walk-subforms (form accumulator result)
@@ -23,6 +17,12 @@
             ((funcall recur-if form) (walk-subforms form accumulator nil))
             (t (values form accumulator))))))
 
+(defun rnotany (predicate tree &key (recur-if #'consp))
+  "Recursive NOTANY."
+  (if (funcall recur-if tree) 
+      (every (lambda (tree) (rnotany predicate tree :recur-if recur-if)) tree)
+      (not (funcall predicate tree))))
+            
 (defun recurp (form)
   "Is FORM non-terminal?"
   (not (or (atom form) 
@@ -81,9 +81,9 @@
   (multiple-value-bind (form slots) (slots-to-arguments form)
     `(lambda ,(reverse slots) ,form)))
             
-(defmacro op (&rest form &environment environment)
+(defmacro op (&rest form &environment env)
   "Make an anonymous function with implicit arguments."
   (multiple-value-bind (form invariants) 
-                       (lift-invariants form :environment environment)
+                       (lift-invariants form :environment env)
     (with-bindings invariants `(op* ,@form))))
     
