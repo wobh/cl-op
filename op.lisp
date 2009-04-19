@@ -69,7 +69,7 @@
                                       :test #'equal :key #'second)
                                 (list (gensym) subform))))
                   (values (first bind) (adjoin bind bindings :test #'equal)))
-                (values subform bindings (special-form-p expansion)))))
+                (values expansion bindings (special-form-p expansion)))))
         form :recur-if #'recurp))
 
 (defmacro op* (&rest form)
