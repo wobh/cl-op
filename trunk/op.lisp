@@ -72,10 +72,6 @@
                 (values subform bindings (special-form-p expansion)))))
         form :recur-if #'recurp))
 
-(defun with-bindings (bindings form)
-  "Lexically enclose FORM in BINDINGS."
-  (if bindings `(let ,bindings ,form) form))
-
 (defmacro op* (&rest form)
   "Make an anonymous function with implicit arguments. Defer evaluation."
   (multiple-value-bind (form slots) (slots-to-arguments form)
@@ -85,5 +81,7 @@
   "Make an anonymous function with implicit arguments."
   (multiple-value-bind (form invariants) 
                        (lift-invariants form :environment env)
-    (with-bindings invariants `(op* ,@form))))
+    (if invariants 
+        `(let ,invariants (op* ,@form)) 
+        `(op* ,@form))))
     
