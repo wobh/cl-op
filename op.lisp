@@ -46,9 +46,9 @@
   (walk (lambda (subform arguments)
           (if (slotp subform)
               (let ((argname (gensym "OP-")))
-                (if (rest-slot-p subform)
-                    (values argname (append (list argname '&rest) arguments))
-                    (values argname (cons argname arguments))))
+                (values argname (if (rest-slot-p subform)
+                                    (append (list argname '&rest) arguments)
+                                    (cons argname arguments))))
               (values subform arguments)))
         form :recur-if #'recurp))
 
@@ -84,4 +84,3 @@
     (if invariants 
         `(let ,invariants (op* ,@form)) 
         `(op* ,@form))))
-    
