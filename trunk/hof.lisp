@@ -1,4 +1,4 @@
-(in-package :cl-op-hof)
+(in-package :cl-op.hof)
 
 (defun flip (function)
   "Switch the first two arguments of FUNCTION."

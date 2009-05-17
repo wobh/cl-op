@@ -1,3 +1,10 @@
+Version 0.7.0
+5-17-2009
+Rewrote code walker in CPS.
+Better lifting from special forms.
+Added compiler macro for beta reduction.
+BREAKING CHANGE -- renamed CL-OP-HOF to CL-OP.HOF
+
 Version 0.6.1
 4-13-2009
 Added GENERATOR to CL-OP-HOF.

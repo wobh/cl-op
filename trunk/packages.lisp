@@ -3,7 +3,7 @@
   (:export #:op
            #:op*))
            
-(defpackage :cl-op-hof
+(defpackage :cl-op.hof
   (:use :cl)
   (:export #:flip
            #:disjoin
