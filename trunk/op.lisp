@@ -37,11 +37,11 @@
             
 (defun simple-slot-p (object)
   "Is OBJECT a simple slot designator?"
-  (eq object (intern "_")))
+  (and (symbolp object) (string= (symbol-name object) "_")))
 
 (defun rest-slot-p (object)
   "Is OBJECT a rest slot designator?"
-  (eq object (intern "__")))
+  (and (symbolp object) (string= (symbol-name object) "__")))
   
 (defun slotp (object)
   "Is OBJECT a slot designator?"
