@@ -20,7 +20,3 @@
     (reduce #'funcall (butlast functions) :from-end t
             :initial-value (apply (first (last functions)) arguments))))
 
-(defmacro generator (&body body)
-  "Make a generator function."
-  (let ((arguments (gensym)))
-    `(lambda (&rest ,arguments) (declare (ignore ,arguments)) ,@body)))
