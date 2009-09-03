@@ -87,15 +87,25 @@
                  (funcall cont `(,@(subseq expansion 0 2) ,form) bindings))))
           (t (funcall cont subform bindings)))))
 
-(defmacro op* (&rest args)
+(defmacro op* (&rest form)
   "Make an anonymous function with implicit arguments. Defer evaluation."
-  (multiple-value-bind (form slots) (slots-to-arguments args)
-    `(lambda ,(reverse slots) ,form)))
+  (multiple-value-bind (form slots) (slots-to-arguments form)
+    (if slots
+        `(lambda ,(reverse slots) ,form)
+        (let ((sink (gensym)))
+          `(lambda (&rest ,sink) (declare (ignore ,sink)) ,form)))))
             
-(defmacro op (&rest args &environment *environment*)
+(defmacro op (&rest form &environment *environment*)
   "Make an anonymous function with implicit arguments."
   (declare (special *environment*))
-  (multiple-value-bind (args invariants) (lift-invariants args)
-    (if invariants 
-        `(let ,invariants (op* ,@args)) 
-        `(op* ,@args))))
+  (multiple-value-bind (form-lifted invariants) (lift-invariants form)
+    (if (and invariants (not (rnotany #'slotp form :recur-if #'recurp)))
+        `(let ,invariants (op* ,@form-lifted)) 
+        `(op* ,@form))))
+        
+(let ((original-reader (get-dispatch-macro-character #\# #\'))) 
+  (set-dispatch-macro-character #\# #\'
+      (lambda (stream subchar arg)
+        (if (eq (peek-char nil stream nil (values) t) #\()
+            (cons 'op (read stream nil (values) t))
+            (funcall original-reader stream subchar arg)))))
